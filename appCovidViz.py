@@ -14,7 +14,7 @@ import plotly.express as px
 
 #%% Intialize paths
 
-path2csv = "Data\covid19_casedistribution.csv"
+path2csv = "Data/covid19_casedistribution.csv"
 
 #%% load df and process
 
