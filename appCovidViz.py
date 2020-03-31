@@ -12,6 +12,7 @@ import altair as alt
 import numpy as np
 import plotly.express as px
 
+
 #%% Intialize paths
 
 path2csv = "Data/covid19_casedistribution.csv"
@@ -58,12 +59,20 @@ def chart(df,x,y,z,scale='linear'):
 
 st.title("Covid 19 vizualization")
 
+#sidebar
 # Add a selectbox to the sidebar: return a value
 typeSelectbox = st.sidebar.selectbox(
     'How would you like to display the data set',
     ('charts', 'map')
 )         
 
+lastDay = df.dateRep.max()
+totalCases = df[df.dateRep==lastDay].casesCum.sum()
+totalDeaths = df[df.dateRep==lastDay].deathsCum.sum()
+
+st.sidebar.markdown("Day \n {}".format(lastDay))
+st.sidebar.markdown("Total cases: {}".format(totalCases))
+st.sidebar.markdown("Total daeths: {}".format(totalDeaths))
 
 scale = 'linear'
 
@@ -104,7 +113,7 @@ elif typeSelectbox == "map":
 
     # nbDaySinceOutbreak = df.dateRep.max() - df.dateRep.min()
     # date = st.slider('Date', 0, 1, nbDaySinceOutbreak)
-    dfm = df[df['dateRep']=='2020/03/28']
+    dfm = df[df['dateRep']==lastDay]
     fig = px.choropleth(dfm, locations="countryterritoryCode",
                         color="deathsCum", # lifeExp is a column of gapminder
                         hover_name="countriesAndTerritories", # column to add to hover information
@@ -113,9 +122,6 @@ elif typeSelectbox == "map":
     title_text = 'Map of covid 19'
     )
     st.plotly_chart(fig, use_container_width=True)
-
-
-
 
 
 
