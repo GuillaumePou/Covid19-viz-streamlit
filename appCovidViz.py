@@ -72,7 +72,7 @@ totalDeaths = df[df.dateRep==lastDay].deathsCum.sum()
 
 st.sidebar.markdown("Day \n {}".format(lastDay))
 st.sidebar.markdown("Total cases: {}".format(totalCases))
-st.sidebar.markdown("Total daeths: {}".format(totalDeaths))
+st.sidebar.markdown("Total deaths: {}".format(totalDeaths))
 
 scale = 'linear'
 
