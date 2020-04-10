@@ -17,7 +17,7 @@ today = date.today().day
 
 #%% Intialize paths
 
-@st.cache
+@st.cache(allow_output_mutation=True)
 def retrieveDF(today):
     from io import StringIO
     import requests
@@ -38,10 +38,10 @@ def processData(df):
     df["fatalityRate"] = df.deathsCum / df.casesCum
     df["fatalityRate"] = df["fatalityRate"].where(df["fatalityRate"] !=1)
     # create a new index based from day after 10 deaths
-    df['daysAfter10days'] = df[df.deathsCum > 10].groupby('geoId').deaths.rank(method="first", ascending=True)
+    df['daysAfter10Deaths'] = df[df.deathsCum > 10].groupby('geoId').deathsCum.rank(method="first", ascending=True)
     return(df)
 
-df = processData(retrieveDF(today))
+df = processData(retrieveDF(today).copy())
 
 #%% functions
 
@@ -71,49 +71,80 @@ st.title("Covid 19 vizualization")
 # Add a selectbox to the sidebar: return a value
 typeSelectbox = st.sidebar.selectbox(
     'How would you like to display the data set',
-    ('charts', 'map')
+    ('Charts', 'Map', 'HeatMap')
 )         
 
 lastDay = df.dateRep.max()
 totalCases = df[df.dateRep==lastDay].casesCum.sum()
 totalDeaths = df[df.dateRep==lastDay].deathsCum.sum()
 
-st.sidebar.markdown("Day \n {}".format(lastDay))
+st.sidebar.markdown("Date: \n {}".format(date.today()))
 st.sidebar.markdown("Total cases: {}".format(totalCases))
 st.sidebar.markdown("Total deaths: {}".format(totalDeaths))
 
 scale = 'linear'
 
-if typeSelectbox == "charts":
-    if st.checkbox('Cummulative'):
-    
-        if st.checkbox('log scale'):
+if typeSelectbox == "Charts":
+    if st.checkbox('All Countries'):
+        if st.checkbox('Cummulative'):
+        
+            if st.checkbox('log scale'):
+                
+                chartDeaths = chart(df, 'dateRep', 'deathsCum', 'countriesAndTerritories', 'log')
+                chartCases = chart(df, 'dateRep', 'casesCum', 'countriesAndTerritories', 'log')
+                
+                st.altair_chart(chartDeaths, use_container_width=True)
+                st.altair_chart(chartCases, use_container_width=True)
             
-            chartDeaths = chart(df, 'dateRep', 'deathsCum', 'countriesAndTerritories', 'log')
-            chartCases = chart(df, 'dateRep', 'casesCum', 'countriesAndTerritories', 'log')
+            else:
+                chartDeaths = chart(df, 'dateRep', 'deathsCum', 'countriesAndTerritories')
+                chartCases = chart(df, 'dateRep', 'casesCum', 'countriesAndTerritories')
+                
+                st.altair_chart(chartDeaths, use_container_width=True)
+                st.altair_chart(chartCases, use_container_width=True)    
+            
+            if st.checkbox('Fatality rate'):
+                chartFatality = chart(df, 'dateRep', 'fatalityRate', 'countriesAndTerritories')
+                st.altair_chart(chartFatality, use_container_width=True)
+    
+        else:
+            chartDeaths = chart(df, 'dateRep', 'deaths', 'countriesAndTerritories')
+            chartCases = chart(df, 'dateRep', 'cases', 'countriesAndTerritories')
             
             st.altair_chart(chartDeaths, use_container_width=True)
             st.altair_chart(chartCases, use_container_width=True)
+    else:
+        indexdf15 =  df.groupby('geoId').casesCum.max().sort_values(ascending = False)[0:15].index
+        df15 = df[df.geoId.isin(indexdf15)]
+        if st.checkbox('Cummulative'):
         
+            if st.checkbox('log scale'):
+                
+                chartDeaths = chart(df15, 'dateRep', 'deathsCum', 'countriesAndTerritories', 'log')
+                chartCases = chart(df15, 'dateRep', 'casesCum', 'countriesAndTerritories', 'log')
+                
+                st.altair_chart(chartDeaths, use_container_width=True)
+                st.altair_chart(chartCases, use_container_width=True)
+            
+            else:
+                chartDeaths = chart(df15, 'dateRep', 'deathsCum', 'countriesAndTerritories')
+                chartCases = chart(df15, 'dateRep', 'casesCum', 'countriesAndTerritories')
+                
+                st.altair_chart(chartDeaths, use_container_width=True)
+                st.altair_chart(chartCases, use_container_width=True)    
+            
+            if st.checkbox('Fatality rate'):
+                chartFatality = chart(df15, 'dateRep', 'fatalityRate', 'countriesAndTerritories')
+                st.altair_chart(chartFatality, use_container_width=True)
+    
         else:
-            chartDeaths = chart(df, 'dateRep', 'deathsCum', 'countriesAndTerritories')
-            chartCases = chart(df, 'dateRep', 'casesCum', 'countriesAndTerritories')
+            chartDeaths = chart(df15, 'dateRep', 'deaths', 'countriesAndTerritories')
+            chartCases = chart(df15, 'dateRep', 'cases', 'countriesAndTerritories')
             
             st.altair_chart(chartDeaths, use_container_width=True)
-            st.altair_chart(chartCases, use_container_width=True)    
-        
-        if st.checkbox('Fatality rate'):
-            chartFatality = chart(df, 'dateRep', 'fatalityRate', 'countriesAndTerritories')
-            st.altair_chart(chartFatality, use_container_width=True)
+            st.altair_chart(chartCases, use_container_width=True)
 
-    else:
-        chartDeaths = chart(df, 'dateRep', 'deaths', 'countriesAndTerritories')
-        chartCases = chart(df, 'dateRep', 'cases', 'countriesAndTerritories')
-        
-        st.altair_chart(chartDeaths, use_container_width=True)
-        st.altair_chart(chartCases, use_container_width=True)
-
-elif typeSelectbox == "map":
+elif typeSelectbox == "Map":
     
 
 
@@ -141,8 +172,39 @@ elif typeSelectbox == "map":
 
 
 
+elif typeSelectbox == "HeatMap":
+    indexdf15 =  df.groupby('geoId').casesCum.max().sort_values(ascending = False)[0:15].index
+    df15 = df[df.geoId.isin(indexdf15)]
+    
+    # make heatmap on nb of cum death
+    heatmapDeath = (
+        alt.Chart(df15)
+        .mark_rect()
+        .encode(
+            alt.X("dateRep"),
+            alt.Y("countriesAndTerritories"),
+            alt.Color("deathsCum", scale=alt.Scale(scheme="lightmulti")),
+            tooltip=["dateRep", "countriesAndTerritories", "deathsCum"],
+        )
+        .interactive()
+    )
 
+    st.altair_chart(heatmapDeath, use_container_width=True)
 
+    # make heatmap on nb of cum death since 10 deaths
+    heatmapDeathAfter10 = (
+        alt.Chart(df15)
+        .mark_rect()
+        .encode(
+            alt.X("daysAfter10Deaths"),
+            alt.Y("countriesAndTerritories"),
+            alt.Color("deathsCum", scale=alt.Scale(scheme="lightmulti")),
+            tooltip=["daysAfter10Deaths", "countriesAndTerritories", "deathsCum"],
+        )
+        .interactive()
+    )
+
+    st.altair_chart(heatmapDeathAfter10, use_container_width=True)
 
 
 
