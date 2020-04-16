@@ -37,7 +37,7 @@ def processData(df):
     df['casesCum'] = df.sort_values('dateRep',ascending=True).groupby('geoId').cases.cumsum()
     df["fatalityRate"] = df.deathsCum / df.casesCum
     df["fatalityRate"] = df["fatalityRate"].where(df["fatalityRate"] !=1)
-    # create a new index based from day after 10 deaths
+    # create a new index based from day after 10 deaths 
     df['daysAfter10Deaths'] = df[df.deathsCum > 10].groupby('geoId').deathsCum.rank(method="first", ascending=True)
     return(df)
 
@@ -208,3 +208,9 @@ elif typeSelectbox == "HeatMap":
 
 
 
+#%% 
+
+st.info(
+    """ By: [G. Poullain](https://www.linkedin.com/in/guillaume-poullain/?locale=en_US) | Code source: [GitHub](https://github.com/GuillaumePou/Covid19-viz-streamlit)
+        | Data source: [Data Europa]('https://data.europa.eu/euodp/en/data/dataset/covid-19-coronavirus-data'). """
+)
