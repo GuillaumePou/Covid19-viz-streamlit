@@ -4,3 +4,4 @@ pandas==1.0.3
 altair==4.0.1
 streamlit==0.57.1
 plotly==4.5.4
+urllib3>=1.26.18 # not directly required, pinned by Snyk to avoid a vulnerability
